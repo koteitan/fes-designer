@@ -634,7 +634,7 @@ function showSourceRow() {
   $('rowFile').hidden = st.source !== 'file';
   $('rowUrl').hidden = st.source !== 'url';
   $('rowLive').hidden = st.source !== 'tab' && st.source !== 'mic';
-  $('liveBtn').textContent = st.source === 'tab' ? 'タブを選んで共有する' : 'マイク・ライン入力を使う';
+  $('liveBtn').textContent = st.source === 'tab' ? 'ほかのタブの音を取り込む' : 'マイク・ライン入力を使う';
 }
 $('source').value = st.source;
 if ($('source').value === '') st.source = 'demo';
