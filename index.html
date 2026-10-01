@@ -17,7 +17,8 @@
   <button id="menuBtn" class="icon" aria-label="メニュー" aria-expanded="false">☰</button>
   <div id="menu" class="menu" hidden>
     <label><input type="checkbox" id="optDark"> ダークモード</label>
-    <label><input type="checkbox" id="optHeat"> 音圧マップ (dB(A)) を表示</label>
+    <label><input type="checkbox" id="optHeat"> 音圧マップ (dB(A)) を表示 (地図と地面)</label>
+    <label><input type="checkbox" id="optMini"> 右上の地図を表示</label>
     <label><input type="checkbox" id="optAmb"> 環境音 (観客・街・風・雨・波)</label>
     <label><input type="checkbox" id="optSteps"> 足音</label>
     <label class="col">距離による音量差の圧縮 <span id="compVal"></span>
@@ -60,25 +61,40 @@
     <label>時間帯<select id="tod"></select></label>
     <label>天気<select id="weather"></select></label>
     <label>風向き<select id="windDir"></select></label>
-    <h2>聴く人</h2>
+    <h2>音源 (入力)</h2>
+    <label>入力<select id="source">
+      <option value="demo">デモ曲 (内蔵シンセ, 128BPM)</option>
+      <option value="file">音声ファイル</option>
+      <option value="tab">ブラウザのタブの音 (YouTube・Spotify など)</option>
+      <option value="mic">マイク・ライン入力</option>
+      <option value="url">URL (音声ファイルへの直接リンク)</option>
+    </select></label>
+    <div id="rowFile" class="srcRow" hidden><button id="fileBtn">ファイルを選ぶ…</button></div>
+    <div id="rowUrl" class="srcRow" hidden><input id="urlIn" type="url" placeholder="https://…/song.mp3"><button id="urlBtn">再生</button></div>
+    <div id="rowLive" class="srcRow" hidden><button id="liveBtn">接続する</button></div>
+    <input type="file" id="file" accept="audio/*,video/*" hidden>
+    <p id="srcStatus" class="hint"></p>
+    <label>入力の音量 <span id="inGainVal"></span>
+      <input type="range" id="inGain" min="-24" max="24" step="1"></label>
+    <div class="meter"><div id="inMeter"></div></div>
+    <h2>聴く人 (道を自動で歩くとき)</h2>
     <label>頭の向き<select id="headMode">
       <option value="auto">進む方向 (着席後はステージ)</option>
       <option value="stage">いつもステージ</option>
     </select></label>
-    <h2>音源</h2>
-    <label>曲<select id="source">
-      <option value="demo">デモ曲 (内蔵シンセ, 128BPM)</option>
-      <option value="file">音声ファイルを選ぶ…</option>
-    </select></label>
-    <input type="file" id="file" accept="audio/*" hidden>
-    <p id="fileName" class="hint"></p>
-    <p class="hint">地図の <b>S</b> (スタート) と <b>席</b> はドラッグで動かせます。道の上をクリックするとそこへ移動します。音声ファイルはページにドロップしても使えます。</p>
+    <p class="hint">「タブの音」は共有画面でタブを選び「タブの音声も共有」をオンにしてください。元のタブの音は止まり、このシミュレーションを通った音だけが聞こえます。ファイルはページにドロップしても使えます。</p>
+    <p class="hint">右上の地図: <b>S</b> と <b>席</b> はドラッグで動かせます。道をクリックするとそこから自動で歩き、道以外をクリックするとそこへ移動します。</p>
   </section>
 
-  <section id="mapWrap" class="panel">
-    <canvas id="map"></canvas>
-    <div id="legend" hidden></div>
-    <div id="mapBusy" class="busy" hidden>計算中…</div>
+  <section id="viewWrap" class="panel">
+    <canvas id="view3d"></canvas>
+    <div id="hud">クリックで見回す (Esc で解除)・WASD / 矢印で歩く・Shift で走る</div>
+    <div id="joy" hidden><div></div></div>
+    <div id="mini">
+      <canvas id="map"></canvas>
+      <div id="legend" hidden></div>
+      <div id="mapBusy" class="busy" hidden>計算中…</div>
+    </div>
   </section>
 
   <section id="info" class="panel">
@@ -110,8 +126,10 @@
   </section>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="acoustics.js"></script>
 <script src="sounds.js"></script>
+<script src="view3d.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
