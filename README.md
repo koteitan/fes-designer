@@ -40,6 +40,12 @@
 
 ビルドは不要です (index.html + JS + CSS、3D は three.js r128 を CDN から読み込み)。
 
+## ライセンス
+
+[MIT](LICENSE)。3D 表示に使っている [three.js](https://threejs.org/) も MIT ライセンスです。
+
 ---
 
 A web app that simulates how an outdoor festival sounds from outside the venue, using outdoor/architectural acoustics models (ISO 9613-1 air absorption, Delany–Bazley ground, Kurze–Anderson barriers, refraction, turbulence, image sources, reverberant tails, spherical-head binaural rendering). Walk from outside the venue to your seat.
+
+License: MIT (see [LICENSE](LICENSE)).
