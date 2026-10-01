@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fes Designer — 会場の外から聴くフェス</title>
+<meta name="description" content="建築音響シミュレーションで、野外ライブを会場の外から聴いているような音を作るWebアプリ">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%226%22 fill=%22%23ff7a2f%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Fes Designer</h1>
+    <span class="sub">会場の外から聴くフェス — 屋外音響シミュレータ</span>
+  </div>
+  <button id="menuBtn" class="icon" aria-label="メニュー" aria-expanded="false">☰</button>
+  <div id="menu" class="menu" hidden>
+    <label><input type="checkbox" id="optDark"> ダークモード</label>
+    <label><input type="checkbox" id="optHeat"> 音圧マップ (dB(A)) を表示</label>
+    <label><input type="checkbox" id="optAmb"> 環境音 (観客・街・風・雨・波)</label>
+    <label><input type="checkbox" id="optSteps"> 足音</label>
+    <label class="col">距離による音量差の圧縮 <span id="compVal"></span>
+      <input type="range" id="optComp" min="0" max="1" step="0.05">
+      <small>0 = 物理どおり (遠くは本当に小さい) / 1 = 音量を揃える</small>
+    </label>
+    <a href="https://github.com/koteitan/fes-designer" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<div id="transport">
+  <button id="playBtn" class="primary">▶ 再生</button>
+  <button id="walkBtn">🚶 歩く</button>
+  <button id="resetBtn" title="スタート地点へ戻る">⏮</button>
+  <label class="grow">位置
+    <input type="range" id="progress" min="0" max="1000" step="1">
+  </label>
+  <span id="where" class="badge">—</span>
+  <label>速さ
+    <select id="speed">
+      <option value="1">×1 (徒歩)</option>
+      <option value="3">×3</option>
+      <option value="10">×10</option>
+      <option value="30">×30</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="bypass"> 原音</label>
+  <label>音量 <input type="range" id="volume" min="-30" max="12" step="1"></label>
+</div>
+
+<main>
+  <section id="controls" class="panel">
+    <h2>会場</h2>
+    <label>規模<select id="venue"></select></label>
+    <label>サウンドシステム<select id="system"></select></label>
+    <label>地面<select id="ground"></select></label>
+    <h2>場所と天気</h2>
+    <label>地域<select id="region"></select></label>
+    <label>月<select id="month"></select></label>
+    <label>時間帯<select id="tod"></select></label>
+    <label>天気<select id="weather"></select></label>
+    <label>風向き<select id="windDir"></select></label>
+    <h2>聴く人</h2>
+    <label>頭の向き<select id="headMode">
+      <option value="auto">進む方向 (着席後はステージ)</option>
+      <option value="stage">いつもステージ</option>
+    </select></label>
+    <h2>音源</h2>
+    <label>曲<select id="source">
+      <option value="demo">デモ曲 (内蔵シンセ, 128BPM)</option>
+      <option value="file">音声ファイルを選ぶ…</option>
+    </select></label>
+    <input type="file" id="file" accept="audio/*" hidden>
+    <p id="fileName" class="hint"></p>
+    <p class="hint">地図の <b>S</b> (スタート) と <b>席</b> はドラッグで動かせます。道の上をクリックするとそこへ移動します。音声ファイルはページにドロップしても使えます。</p>
+  </section>
+
+  <section id="mapWrap" class="panel">
+    <canvas id="map"></canvas>
+    <div id="legend" hidden></div>
+    <div id="mapBusy" class="busy" hidden>計算中…</div>
+  </section>
+
+  <section id="info" class="panel">
+    <h2>空気と地面 <small>(地域・月・時間・天気から算出)</small></h2>
+    <dl id="climate" class="kv"></dl>
+    <h2>聴いている場所</h2>
+    <dl id="listener" class="kv"></dl>
+    <h2>耳に届く周波数特性</h2>
+    <canvas id="fr"></canvas>
+    <details>
+      <summary>しくみ (使っている音響モデル)</summary>
+      <ul class="models">
+        <li><b>気候</b>: 地域の月平均気温・湿度 → 時間帯と天気で気温を動かし、水蒸気圧を保って湿度を再計算。標高から気圧。</li>
+        <li><b>音速</b>: c = 331.3·√(1 + T/273.15) (+湿度補正)</li>
+        <li><b>空気吸収</b>: ISO 9613-1 (気温・湿度・気圧から周波数ごとの dB/m)</li>
+        <li><b>地面</b>: Delany–Bazley の地面インピーダンス (流れ抵抗 σ) と、球面波反射係数 Q = R<sub>p</sub> + (1−R<sub>p</sub>)F(w) (Faddeeva 関数)。観客エリアでは人の頭の高さを吸音面として扱う。</li>
+        <li><b>柵・スタンド・ビル</b>: Kurze–Anderson の回折減衰 (フレネル数 N = 2δ/λ) と壁の透過損失。</li>
+        <li><b>ラインアレイ</b>: 近距離は円筒波 (−3 dB/倍距離)、L²f/2c より遠くは球面波。サブは無指向/カーディオイド。ディレイタワーは時間合わせ (+10 ms)。</li>
+        <li><b>システム調整</b>: 各スピーカーを FOH (またはタワーの担当位置) でターゲット特性に EQ。FOH = 100 dB(A)。</li>
+        <li><b>屈折</b>: 風と気温勾配から実効音速勾配 → 上向き屈折の影領域 / 夜の逆転層や追い風で遠くまで届く。</li>
+        <li><b>乱流</b>: 直接音と地面反射の干渉を風の強さと距離でぼかす。遠くでは音量がゆらぐ。</li>
+        <li><b>反射</b>: ビル・スタンド・山・木立の 1 次鏡像音源。</li>
+        <li><b>残響</b>: 会場 (Sabine + 空気吸収) と周辺環境の拡散音。会場外へは縁を回折して漏れる。</li>
+        <li><b>頭</b>: Brown–Duda 球頭モデル (両耳の時間差・頭の影)。</li>
+        <li>これらから 4ch (L→左耳, L→右耳, R→左耳, R→右耳) のインパルス応答を作り、歩くたびに作り直して畳み込みます。</li>
+      </ul>
+    </details>
+  </section>
+</main>
+
+<script src="acoustics.js"></script>
+<script src="sounds.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
