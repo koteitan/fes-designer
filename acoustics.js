@@ -27,25 +27,106 @@ A.CROWD = { sigma: 30, plane: 1.2 };
 A.HEAD_RADIUS = 0.0875;
 
 // ------------------------------------------------------------------ tables
+// monthly mean temperature (deg C) and relative humidity (%), approximate climate normals
+// amp: half of the typical daily temperature range, windMul: local windiness
+const city = (name, group, env, alt, amp, windMul, T, RH) => ({ name, group, env, alt, amp, windMul, T, RH });
 A.REGIONS = {
-  tokyo: { name: '東京 湾岸 (都市)', env: 'urban', alt: 5, amp: 3.5, windMul: 0.8,
-    T: [5.4, 6.1, 9.4, 14.3, 18.8, 21.9, 25.7, 26.9, 23.3, 18.0, 12.5, 7.7],
-    RH: [52, 53, 57, 62, 66, 75, 77, 73, 75, 71, 64, 56] },
-  sapporo: { name: '札幌 (公園・郊外)', env: 'suburban', alt: 20, amp: 4, windMul: 0.9,
-    T: [-3.6, -3.1, 0.6, 7.1, 12.4, 16.7, 20.5, 22.3, 18.6, 12.1, 5.2, -0.9],
-    RH: [70, 69, 66, 62, 68, 75, 79, 77, 74, 70, 69, 70] },
-  naeba: { name: '新潟 苗場 (山の中 標高900m)', env: 'mountain', alt: 900, amp: 5, windMul: 0.7,
-    T: [-4.0, -3.5, 0.0, 6.0, 12.0, 16.0, 20.0, 21.0, 17.0, 10.5, 4.5, -1.0],
-    RH: [85, 83, 78, 72, 72, 80, 83, 82, 83, 80, 80, 84] },
-  naha: { name: '沖縄 那覇 (海辺)', env: 'seaside', alt: 5, amp: 2.5, windMul: 1.5,
-    T: [17.3, 17.5, 19.1, 21.5, 24.2, 27.2, 29.1, 29.0, 27.9, 25.5, 22.5, 19.0],
-    RH: [69, 71, 74, 77, 80, 84, 79, 79, 76, 71, 70, 67] },
-  desert: { name: 'カリフォルニア 砂漠 (乾燥)', env: 'desert', alt: 0, amp: 6, windMul: 1.2,
-    T: [14, 16, 19, 23, 27, 32, 35, 34, 31, 25, 18, 13],
-    RH: [40, 38, 32, 25, 22, 20, 25, 28, 28, 30, 36, 40] },
-  somerset: { name: 'イギリス 田園 (牧草地)', env: 'farmland', alt: 30, amp: 4, windMul: 1.1,
-    T: [5, 5, 7, 9, 12, 15, 17, 17, 14, 11, 8, 5],
-    RH: [87, 84, 80, 76, 75, 75, 76, 78, 81, 85, 87, 88] },
+  // 日本
+  tokyo: city('東京 (都市)', '日本', 'urban', 5, 3.5, 0.8,
+    [5.4, 6.1, 9.4, 14.3, 18.8, 21.9, 25.7, 26.9, 23.3, 18.0, 12.5, 7.7], [52, 53, 57, 62, 66, 75, 77, 73, 75, 71, 64, 56]),
+  osaka: city('大阪 (都市)', '日本', 'urban', 5, 3.8, 0.8,
+    [6.2, 6.7, 9.9, 15.5, 20.3, 23.6, 27.7, 29.0, 25.2, 19.5, 13.8, 8.7], [61, 61, 60, 60, 63, 70, 72, 68, 69, 66, 65, 63]),
+  fukuoka: city('福岡 (都市)', '日本', 'urban', 5, 3.8, 0.9,
+    [6.9, 7.8, 10.8, 15.4, 19.9, 23.3, 27.4, 28.4, 24.7, 19.6, 14.2, 9.1], [63, 64, 66, 67, 70, 77, 77, 74, 74, 68, 67, 65]),
+  sapporo: city('札幌 (公園・郊外)', '日本', 'suburban', 20, 4, 0.9,
+    [-3.6, -3.1, 0.6, 7.1, 12.4, 16.7, 20.5, 22.3, 18.6, 12.1, 5.2, -0.9], [70, 69, 66, 62, 68, 75, 79, 77, 74, 70, 69, 70]),
+  naha: city('那覇 (海辺)', '日本', 'seaside', 5, 2.5, 1.5,
+    [17.3, 17.5, 19.1, 21.5, 24.2, 27.2, 29.1, 29.0, 27.9, 25.5, 22.5, 19.0], [69, 71, 74, 77, 80, 84, 79, 79, 76, 71, 70, 67]),
+  // アジア
+  seoul: city('ソウル', 'アジア', 'urban', 40, 4.5, 0.9,
+    [-2.4, 0.4, 5.7, 12.5, 17.8, 22.2, 24.9, 25.7, 21.2, 14.8, 7.2, 0.4], [57, 56, 57, 56, 62, 68, 78, 75, 69, 64, 61, 58]),
+  beijing: city('北京', 'アジア', 'urban', 50, 5.5, 0.9,
+    [-3.1, 0.3, 6.7, 14.8, 20.8, 24.9, 26.7, 25.5, 20.8, 13.7, 5.0, -0.9], [44, 44, 46, 46, 53, 61, 75, 77, 68, 61, 57, 49]),
+  shanghai: city('上海', 'アジア', 'urban', 5, 3.5, 0.9,
+    [4.8, 6.6, 10.3, 15.8, 21.0, 24.8, 29.0, 28.6, 24.9, 19.9, 13.9, 7.5], [74, 74, 73, 73, 74, 80, 78, 78, 77, 73, 74, 72]),
+  hongkong: city('香港', 'アジア', 'urban', 30, 2.5, 1.0,
+    [16.3, 16.8, 19.1, 22.6, 25.9, 27.9, 28.8, 28.6, 27.7, 25.5, 21.8, 17.9], [74, 80, 82, 83, 83, 82, 80, 80, 77, 72, 71, 69]),
+  taipei: city('台北', 'アジア', 'urban', 10, 3, 0.8,
+    [16.1, 16.5, 18.5, 21.9, 25.2, 27.7, 29.6, 29.2, 27.4, 24.5, 21.5, 17.9], [78, 80, 79, 78, 77, 78, 74, 75, 76, 75, 76, 76]),
+  manila: city('マニラ', 'アジア', 'urban', 10, 3.5, 0.9,
+    [26.3, 26.8, 28.1, 29.6, 29.9, 29.0, 28.0, 27.7, 27.7, 27.6, 27.3, 26.5], [73, 70, 67, 66, 71, 77, 81, 83, 82, 80, 77, 75]),
+  bangkok: city('バンコク', 'アジア', 'urban', 5, 4, 0.7,
+    [27.0, 28.3, 29.5, 30.5, 29.9, 29.5, 29.0, 28.8, 28.3, 28.1, 27.8, 26.3], [69, 72, 72, 72, 75, 75, 76, 77, 80, 79, 72, 67]),
+  singapore: city('シンガポール', 'アジア', 'urban', 15, 3, 0.7,
+    [26.5, 27.1, 27.5, 28.0, 28.3, 28.3, 27.9, 27.9, 27.6, 27.6, 26.9, 26.4], [84, 81, 82, 84, 84, 82, 82, 82, 83, 84, 87, 87]),
+  jakarta: city('ジャカルタ', 'アジア', 'urban', 10, 3, 0.7,
+    [26.7, 26.8, 27.3, 27.9, 28.1, 27.8, 27.6, 27.8, 28.1, 28.2, 27.9, 27.3], [85, 85, 83, 82, 80, 79, 76, 74, 74, 76, 80, 83]),
+  mumbai: city('ムンバイ', 'アジア', 'urban', 15, 3.5, 1.0,
+    [24.4, 25.3, 27.2, 28.8, 30.3, 29.6, 28.2, 27.8, 28.0, 28.9, 28.1, 26.0], [69, 69, 71, 73, 73, 80, 85, 85, 83, 77, 70, 69]),
+  // オセアニア
+  sydney: city('シドニー', 'オセアニア', 'urban', 40, 3.5, 1.1,
+    [23.5, 23.4, 22.1, 19.5, 16.6, 14.2, 13.4, 14.5, 17.0, 19.0, 20.4, 22.1], [65, 68, 67, 65, 66, 65, 60, 56, 56, 58, 62, 63]),
+  melbourne: city('メルボルン', 'オセアニア', 'urban', 30, 5, 1.2,
+    [21.2, 21.4, 19.5, 16.6, 13.8, 11.4, 10.7, 11.8, 13.6, 15.6, 17.8, 19.6], [58, 59, 61, 64, 71, 75, 74, 68, 64, 61, 61, 58]),
+  auckland: city('オークランド', 'オセアニア', 'urban', 30, 3.5, 1.3,
+    [19.9, 20.3, 19.0, 16.9, 14.6, 12.6, 11.6, 12.0, 13.4, 14.8, 16.5, 18.4], [71, 72, 73, 76, 80, 82, 82, 79, 76, 73, 71, 71]),
+  // 北米
+  losangeles: city('ロサンゼルス', '北米', 'urban', 90, 5, 0.9,
+    [14.3, 14.8, 15.7, 17.0, 18.3, 20.2, 22.4, 23.1, 22.6, 20.4, 17.1, 14.3], [63, 67, 69, 70, 73, 75, 76, 76, 74, 71, 65, 62]),
+  sanfrancisco: city('サンフランシスコ', '北米', 'urban', 20, 4, 1.4,
+    [10.9, 12.3, 13.2, 14.1, 15.2, 16.6, 17.2, 17.8, 18.4, 17.2, 13.8, 11.0], [76, 75, 73, 71, 73, 74, 76, 77, 74, 72, 73, 76]),
+  lasvegas: city('ラスベガス (乾燥 標高610m)', '北米', 'urban', 610, 7, 1.1,
+    [8.6, 11.2, 15.2, 19.4, 24.6, 30.2, 33.4, 32.4, 28.0, 20.8, 13.4, 8.1], [41, 36, 29, 22, 18, 14, 17, 20, 21, 25, 34, 40]),
+  denver: city('デンバー (標高1600m)', '北米', 'urban', 1609, 8, 1.1,
+    [-0.6, 0.4, 4.6, 8.6, 13.9, 19.6, 23.4, 22.3, 17.7, 10.8, 4.3, -0.6], [55, 54, 50, 46, 49, 44, 43, 45, 44, 45, 54, 57]),
+  chicago: city('シカゴ', '北米', 'urban', 180, 5, 1.3,
+    [-4.6, -2.6, 3.2, 9.4, 15.4, 21.0, 24.0, 23.1, 19.1, 12.4, 5.4, -1.3], [72, 71, 68, 64, 64, 66, 68, 70, 70, 68, 72, 75]),
+  toronto: city('トロント', '北米', 'urban', 80, 5, 1.1,
+    [-5.5, -4.5, 0.0, 6.5, 13.0, 18.5, 21.5, 20.6, 16.4, 9.9, 3.9, -2.2], [74, 72, 68, 64, 66, 68, 69, 72, 74, 74, 77, 78]),
+  newyork: city('ニューヨーク', '北米', 'urban', 10, 4.5, 1.1,
+    [0.5, 1.7, 5.7, 11.9, 17.4, 22.4, 25.3, 24.7, 20.8, 14.6, 8.9, 3.4], [61, 59, 57, 55, 62, 65, 65, 67, 68, 65, 64, 63]),
+  // 中南米
+  mexicocity: city('メキシコシティ (標高2240m)', '中南米', 'urban', 2240, 8, 0.8,
+    [14.4, 15.8, 18.0, 19.3, 19.6, 18.8, 17.6, 17.8, 17.4, 16.4, 15.3, 14.4], [52, 46, 41, 44, 52, 64, 70, 71, 73, 67, 60, 56]),
+  saopaulo: city('サンパウロ (標高760m)', '中南米', 'urban', 760, 4.5, 0.9,
+    [23.0, 23.4, 22.6, 20.9, 18.7, 17.6, 17.0, 18.3, 19.0, 20.5, 21.4, 22.4], [79, 79, 80, 79, 78, 77, 74, 71, 74, 77, 77, 79]),
+  rio: city('リオデジャネイロ (海辺)', '中南米', 'seaside', 10, 3.5, 1.2,
+    [26.5, 27.0, 26.3, 24.7, 23.2, 22.0, 21.5, 22.0, 22.3, 23.3, 24.5, 25.8], [79, 79, 80, 80, 80, 79, 77, 77, 79, 80, 79, 80]),
+  buenosaires: city('ブエノスアイレス', '中南米', 'urban', 25, 5, 1.1,
+    [24.5, 23.5, 21.5, 17.9, 14.6, 11.6, 10.9, 12.5, 14.6, 17.8, 20.6, 23.3], [64, 69, 73, 76, 77, 79, 77, 73, 70, 71, 67, 63]),
+  santiago: city('サンティアゴ', '中南米', 'urban', 570, 9, 0.8,
+    [21.0, 20.4, 18.2, 14.7, 11.4, 8.8, 8.5, 9.6, 11.6, 14.4, 17.2, 19.8], [52, 54, 57, 64, 73, 79, 78, 74, 70, 63, 56, 52]),
+  // ヨーロッパ
+  london: city('ロンドン', 'ヨーロッパ', 'urban', 20, 4, 1.1,
+    [5.2, 5.3, 7.6, 9.9, 13.3, 16.5, 18.7, 18.5, 15.7, 12.0, 8.0, 5.5], [81, 77, 72, 67, 67, 66, 66, 69, 73, 78, 81, 82]),
+  dublin: city('ダブリン', 'ヨーロッパ', 'urban', 20, 3.5, 1.3,
+    [5.3, 5.4, 6.7, 8.4, 10.9, 13.6, 15.3, 15.0, 13.3, 10.8, 7.6, 5.6], [86, 84, 80, 77, 76, 77, 79, 81, 83, 85, 87, 87]),
+  paris: city('パリ', 'ヨーロッパ', 'urban', 40, 4.5, 1.0,
+    [5.0, 5.6, 8.8, 11.5, 15.2, 18.3, 20.5, 20.3, 16.9, 13.0, 8.3, 5.5], [83, 78, 73, 69, 70, 69, 68, 71, 76, 82, 84, 85]),
+  amsterdam: city('アムステルダム', 'ヨーロッパ', 'urban', 0, 3.5, 1.4,
+    [3.6, 4.0, 6.6, 9.6, 13.3, 16.0, 18.1, 17.9, 15.0, 11.4, 7.4, 4.4], [87, 84, 80, 74, 73, 76, 77, 78, 82, 85, 88, 89]),
+  berlin: city('ベルリン', 'ヨーロッパ', 'urban', 35, 4.5, 1.0,
+    [0.6, 1.4, 4.8, 9.6, 14.2, 17.4, 19.6, 19.2, 14.9, 10.0, 5.1, 1.7], [85, 82, 76, 67, 66, 67, 68, 70, 77, 82, 86, 87]),
+  stockholm: city('ストックホルム', 'ヨーロッパ', 'urban', 20, 4, 1.0,
+    [-1.6, -1.7, 0.7, 5.5, 11.1, 15.6, 18.4, 17.4, 12.9, 7.5, 3.2, 0.0], [85, 83, 77, 70, 64, 66, 69, 74, 79, 83, 87, 87]),
+  milan: city('ミラノ', 'ヨーロッパ', 'urban', 120, 5, 0.7,
+    [2.5, 4.7, 9.0, 12.8, 17.5, 21.5, 24.0, 23.4, 19.0, 13.4, 7.6, 3.4], [85, 78, 71, 73, 73, 71, 70, 72, 74, 81, 85, 86]),
+  madrid: city('マドリード (標高650m)', 'ヨーロッパ', 'urban', 650, 7, 0.9,
+    [6.3, 7.9, 11.2, 12.9, 16.7, 22.2, 25.6, 25.1, 20.9, 15.1, 9.9, 6.9], [71, 64, 56, 56, 51, 42, 37, 39, 49, 62, 70, 74]),
+  barcelona: city('バルセロナ', 'ヨーロッパ', 'urban', 10, 3.5, 1.0,
+    [11.2, 11.8, 13.6, 15.5, 18.7, 22.4, 25.3, 25.8, 23.1, 19.7, 15.1, 12.2], [69, 67, 68, 69, 70, 69, 68, 70, 72, 73, 70, 69]),
+  // 中東・アフリカ
+  dubai: city('ドバイ', '中東・アフリカ', 'urban', 5, 5, 1.1,
+    [19.7, 20.9, 23.6, 27.6, 31.8, 33.8, 35.7, 36.0, 33.4, 29.9, 25.5, 21.4], [65, 65, 63, 55, 53, 58, 56, 57, 60, 60, 61, 64]),
+  johannesburg: city('ヨハネスブルグ (標高1750m)', '中東・アフリカ', 'urban', 1750, 7, 1.0,
+    [20.0, 19.6, 18.6, 15.9, 13.0, 10.2, 10.4, 13.0, 16.4, 18.0, 18.6, 19.6], [70, 72, 72, 68, 60, 57, 53, 46, 46, 56, 65, 68]),
+  // 郊外・自然のフェス会場
+  naeba: city('新潟 苗場 (山の中 標高900m)', '自然の中のフェス会場', 'mountain', 900, 5, 0.7,
+    [-4.0, -3.5, 0.0, 6.0, 12.0, 16.0, 20.0, 21.0, 17.0, 10.5, 4.5, -1.0], [85, 83, 78, 72, 72, 80, 83, 82, 83, 80, 80, 84]),
+  desert: city('カリフォルニア 砂漠 (乾燥)', '自然の中のフェス会場', 'desert', 0, 6, 1.2,
+    [14, 16, 19, 23, 27, 32, 35, 34, 31, 25, 18, 13], [40, 38, 32, 25, 22, 20, 25, 28, 28, 30, 36, 40]),
+  somerset: city('イギリス 田園 (牧草地)', '自然の中のフェス会場', 'farmland', 30, 4, 1.1,
+    [5, 5, 7, 9, 12, 15, 17, 17, 14, 11, 8, 5], [87, 84, 80, 76, 75, 75, 76, 78, 81, 85, 87, 88]),
 };
 
 // day / night: effective sound-speed gradient caused by temperature (1/s)
@@ -86,15 +167,28 @@ A.GROUNDS = {
 };
 
 // kappa: strength of the diffuse field returned by the surroundings, RT in seconds
+// misc: scattering by trees, buildings, cars, stalls outside the audience area,
+//   as a multiple of the ISO 9613-2 foliage table, over at most maxD metres
 A.ENVS = {
-  urban:    { name: '都市 (ビル街)', kappa: 0.12, RT: 1.4, onset: 0.06 },
-  suburban: { name: '郊外 (公園・木立)', kappa: 0.05, RT: 0.9, onset: 0.04 },
-  mountain: { name: '山 (尾根・森)', kappa: 0.06, RT: 2.5, onset: 0.15 },
-  seaside:  { name: '海辺 (開けた浜)', kappa: 0.015, RT: 0.5, onset: 0.03 },
-  desert:   { name: '砂漠 (何もない)', kappa: 0.008, RT: 0.4, onset: 0.03 },
-  farmland: { name: '田園 (生け垣・丘)', kappa: 0.025, RT: 0.7, onset: 0.04 },
+  urban:    { name: '都市 (ビル街)', kappa: 0.12, RT: 1.4, onset: 0.06, misc: 0.5, maxD: 300 },
+  suburban: { name: '郊外 (公園・木立)', kappa: 0.05, RT: 0.9, onset: 0.04, misc: 0.6, maxD: 250 },
+  mountain: { name: '山 (尾根・森)', kappa: 0.06, RT: 2.5, onset: 0.15, misc: 1.0, maxD: 200 },
+  seaside:  { name: '海辺 (開けた浜)', kappa: 0.015, RT: 0.5, onset: 0.03, misc: 0.15, maxD: 200 },
+  desert:   { name: '砂漠 (何もない)', kappa: 0.008, RT: 0.4, onset: 0.03, misc: 0.05, maxD: 200 },
+  farmland: { name: '田園 (生け垣・丘)', kappa: 0.025, RT: 0.7, onset: 0.04, misc: 0.35, maxD: 250 },
 };
 const RT_SHAPE = [1.15, 1.1, 1.05, 1, 0.95, 0.85, 0.7, 0.5];
+// ISO 9613-2 Table A.1: attenuation through dense foliage, dB/m (63 Hz .. 8 kHz)
+const FOLIAGE = [0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.09, 0.12];
+function foliage(f) {
+  const x = clamp(Math.log2(f / 63), 0, 7), i = Math.min(6, Math.floor(x)), u = x - i;
+  return FOLIAGE[i] * (1 - u) + FOLIAGE[i + 1] * u;
+}
+// scattering loss (dB) for a listener d metres beyond the audience area
+A.miscDb = function (scene, f, d) {
+  const e = scene.envP;
+  return Math.min(25, foliage(f) * e.misc * Math.min(d, e.maxD));
+};
 
 A.VENUES = {
   park: { name: '公園の野外ステージ (2,000人)', kind: 'field', W: 70, D: 60, back: 20, fenceH: 2.0, fenceTL: 5,
@@ -273,7 +367,8 @@ A.barrierG2 = barrierG2;
 function spreadGain(s, f, r, c) {
   r = Math.max(r, 1);
   if (s.type !== 'line') return 1 / r;
-  const rt = Math.max(1, s.L * s.L * f / (2 * c)); // near field of a line source
+  const Le = 0.35 * s.L; // straight long-throw section of a J-shaped array
+  const rt = Math.max(1, Le * Le * f / (2 * c)); // near field of a line source
   return r < rt ? 1 / Math.sqrt(r) : rt / (Math.sqrt(rt) * r);
 }
 
@@ -314,7 +409,7 @@ A.shadowDistance = function (a, c, hs, hr) {
 };
 
 function targetDb(f) {
-  let db = 6 / (1 + Math.pow(f / 110, 2));
+  let db = 10 / (1 + Math.pow(f / 90, 2));
   db -= 3 * clamp(Math.log2(f / 2000) / 3, 0, 1);
   db += 10 * Math.log10(1 / (1 + Math.pow(30 / f, 8)));
   db += 10 * Math.log10(1 / (1 + Math.pow(f / 18000, 8)));
@@ -620,9 +715,10 @@ A.speakerPath = function (scene, fc, si, lx, ly, lz) {
     src: cr.length ? [vx, vy, vz] : [s.x, s.y, s.z], img: [vx, vy, 2 * plane - vz],
   };
   const ratio = r1g / r2g;
+  const dOut = A.distToAudience(scene, lx, ly);
   for (let i = 0; i < n; i++) {
     const f = fc.f[i];
-    const base = fc.eq[si][i] * spreadGain(s, f, r1, c) * db2a(-fc.alpha[i] * r1 + dirDb(s, f, cosA) + refractDb(f, dh, s.z, lz, a, c));
+    const base = fc.eq[si][i] * spreadGain(s, f, r1, c) * db2a(-fc.alpha[i] * r1 + dirDb(s, f, cosA) + refractDb(f, dh, s.z, lz, a, c) - A.miscDb(scene, f, dOut));
     out.gu[i] = base;
     const g = cr.length ? base * Math.sqrt(barrierG2(cr, f, c)) : base;
     out.g[i] = g;
@@ -656,11 +752,12 @@ A.imagePaths = function (scene, fc, si, lx, ly, lz, out) {
     const cr = crossings(scene, s.x, s.y, s.z, px, py, pz, w.bid).concat(crossings(scene, px, py, pz, lx, ly, lz, w.bid));
     const a = cl.gradT + 0.04 * cl.wind * (cl.windDir[0] * (lx - mx) + cl.windDir[1] * (ly - my)) / dh;
     const g = new Float64Array(n);
+    const dOut = A.distToAudience(scene, lx, ly);
     let any = 0;
     for (let i = 0; i < n; i++) {
       const f = fc.f[i];
       let v = fc.eq[si][i] * spreadGain(s, f, r, c) * A.reflCoef(w.type, f) *
-        db2a(-fc.alpha[i] * r + dirDb(s, f, cosA) + refractDb(f, dh, s.z, lz, a, c));
+        db2a(-fc.alpha[i] * r + dirDb(s, f, cosA) + refractDb(f, dh, s.z, lz, a, c) - A.miscDb(scene, f, dOut));
       if (cr.length) v *= Math.sqrt(barrierG2(cr, f, c));
       g[i] = v; any += v * v;
     }
@@ -698,8 +795,9 @@ A.levelAt = function (scene, bctx, x, y, z, fast) {
   const dc = Math.hypot(x - cx, y - cy);
   let crV = null;
   if (!inside) crV = crossings(scene, cx, cy, scene.tail.hv, x, y, z, -1);
+  const dOut = A.distToAudience(scene, x, y);
   for (let i = 0; i < nb; i++) {
-    let v = bctx.prevIn[i];
+    let v = bctx.prevIn[i] * Math.pow(10, -A.miscDb(scene, bctx.f[i], dOut) / 10);
     if (!inside) {
       v *= Math.min(1, Math.pow(scene.radius / dc, 2)) * barrierG2(crV, bctx.f[i], c) * Math.pow(10, -bctx.alpha[i] * Math.max(0, dc - scene.radius) / 10);
     }
@@ -710,7 +808,7 @@ A.levelAt = function (scene, bctx, x, y, z, fast) {
   for (let i = 0; i < nb; i++) {
     let w = 0;
     scene.speakers.forEach((s, si) => { w += bctx.eq[si][i] * bctx.eq[si][i]; });
-    Ee[i] = scene.envP.kappa * w / (de * de) * Math.pow(10, -bctx.alpha[i] * Math.max(0, dc - scene.radius) / 10);
+    Ee[i] = scene.envP.kappa * w / (de * de) * Math.pow(10, (-bctx.alpha[i] * Math.max(0, dc - scene.radius) - 0.5 * A.miscDb(scene, bctx.f[i], dOut)) / 10);
   }
   const E = new Float64Array(nb);
   for (let i = 0; i < nb; i++) E[i] = Ed[i] + Ei[i] + Ev[i] + Ee[i];

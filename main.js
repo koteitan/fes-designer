@@ -9,11 +9,12 @@ const WALK = 1.3; // m/s
 // ------------------------------------------------------------------ state
 const defaults = {
   venue: 'fes', system: 'lineL', ground: 'grass', region: 'tokyo', month: 7, tod: 'evening', weather: 'sunny',
-  windDir: 'toAudience', headMode: 'auto', progress: 0, speed: 3, volume: 0, comp: 0.5,
+  windDir: 'toAudience', headMode: 'auto', progress: 0, speed: 3, volume: 0, comp: 0.2,
   heat: true, amb: true, steps: true, dark: true, bypass: false, source: 'demo', pos: {},
 };
 let st;
 try { st = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { st = Object.assign({}, defaults); }
+if (!(st.v >= 2)) { st.comp = defaults.comp; st.v = 2; } // v2: closer-to-physical default level compression
 let saveTimer = 0;
 function save() {
   clearTimeout(saveTimer);
@@ -25,10 +26,14 @@ document.documentElement.classList.toggle('dark', st.dark);
 function fill(id, table, fmt) {
   const el = $(id);
   el.innerHTML = '';
+  const groups = {};
   for (const [k, v] of Object.entries(table)) {
     const o = document.createElement('option');
     o.value = k; o.textContent = fmt ? fmt(k, v) : v.name;
-    el.appendChild(o);
+    if (v.group) {
+      if (!groups[v.group]) { groups[v.group] = document.createElement('optgroup'); groups[v.group].label = v.group; el.appendChild(groups[v.group]); }
+      groups[v.group].appendChild(o);
+    } else el.appendChild(o);
   }
 }
 fill('venue', A.VENUES); fill('system', A.SYSTEMS); fill('ground', A.GROUNDS, (k, v) => `${v.name} (σ=${v.sigma})`);
@@ -547,12 +552,12 @@ function applyIR(chans) {
 }
 function applyMaster() {
   if (!audio.ctx) return;
-  audio.master.gain.setTargetAtTime(Math.pow(10, (st.volume + 12) / 20), audio.ctx.currentTime, 0.05);
+  audio.master.gain.setTargetAtTime(Math.pow(10, (st.volume + 6) / 20), audio.ctx.currentTime, 0.05);
 }
 function applyBypass() {
   if (!audio.ctx) return;
   const t = audio.ctx.currentTime;
-  audio.dry.gain.setTargetAtTime(st.bypass ? 0.6 : 0, t, 0.05);
+  audio.dry.gain.setTargetAtTime(st.bypass ? 0.3 : 0, t, 0.05);
   audio.wetBus.gain.setTargetAtTime(st.bypass ? 0 : 1, t, 0.05);
   audio.ambBus.gain.setTargetAtTime(st.bypass ? 0 : 1, t, 0.05);
 }
