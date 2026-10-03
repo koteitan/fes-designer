@@ -4,19 +4,19 @@
 const A = window.Acoustics, S = window.Sounds, V3 = window.View3D;
 const $ = id => document.getElementById(id);
 const KEY = 'fes-designer';
-const WALK = 1.3; // m/s
 
 // ------------------------------------------------------------------ state
 const defaults = {
   venue: 'fes', system: 'lineL', ground: 'grass', region: 'tokyo', month: 7, tod: 'evening', weather: 'sunny',
-  windDir: 'toAudience', headMode: 'auto', progress: 0, speed: 3, volume: 0, comp: 0.2,
+  windDir: 'toAudience', headMode: 'auto', progress: 0, volume: 0, comp: 0.2,
   heat: true, mini: true, amb: true, steps: true, dark: true, bypass: false, source: 'demo', url: '', inGain: 0, pos: {},
 };
 let st;
 try { st = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { st = Object.assign({}, defaults); }
 if (!(st.v >= 2)) { st.comp = defaults.comp; st.v = 2; } // v2: closer-to-physical default level compression
-let saveTimer = 0;
+let saveTimer = 0, resetting = false;
 function save() {
+  if (resetting) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* storage unavailable */ } }, 200);
 }
@@ -48,8 +48,6 @@ for (const k of sceneKeys) {
 }
 $('headMode').value = st.headMode;
 $('headMode').addEventListener('change', e => { st.headMode = e.target.value; save(); });
-$('speed').value = st.speed;
-$('speed').addEventListener('change', e => { st.speed = +e.target.value; save(); });
 $('volume').value = st.volume;
 $('volume').addEventListener('input', e => { st.volume = +e.target.value; save(); applyMaster(); });
 $('bypass').checked = st.bypass;
@@ -70,6 +68,13 @@ $('optHeat').addEventListener('change', e => { st.heat = e.target.checked; save(
 $('optMini').checked = st.mini;
 $('mini').hidden = !st.mini;
 $('optMini').addEventListener('change', e => { st.mini = e.target.checked; $('mini').hidden = !st.mini; save(); if (st.mini) { layout(); drawMap(); } });
+$('resetAll').addEventListener('click', () => {
+  if (!confirm('すべての設定と位置を最初の状態に戻します。よろしいですか？')) return;
+  resetting = true;
+  clearTimeout(saveTimer);
+  try { localStorage.removeItem(KEY); } catch (e) { /* storage unavailable */ }
+  location.reload();
+});
 $('optAmb').checked = st.amb;
 $('optAmb').addEventListener('change', e => { st.amb = e.target.checked; save(); updateAmbient(); });
 $('optSteps').checked = st.steps;
@@ -173,7 +178,6 @@ function placeListener(snap) {
   listener.x = p.x; listener.y = p.y;
   if (snap) { listener.lookOff = 0; listener.heading = autoHeading(p); }
   $('progress').value = Math.round(st.progress * 1000);
-  updateWhere();
 }
 function enterRoute(progress) {
   listener.mode = 'route';
@@ -187,17 +191,6 @@ function enterFree() {
   if (listener.mode === 'free') return;
   listener.mode = 'free';
   listener.lookOff = 0;
-  setWalking(false);
-}
-
-function updateWhere() {
-  let w;
-  if (listener.mode === 'route' && st.progress >= 0.999) w = '🪑 座席';
-  else if (scene.gates.some(g => Math.hypot(g.x - listener.x, g.y - listener.y) < 14)) w = '🚪 入場ゲート';
-  else if (A.inAudience(scene, listener.x, listener.y)) w = '🙌 客席エリア';
-  else if (A.insideVenue(scene, listener.x, listener.y)) w = '🎪 場内';
-  else w = '🌆 会場の外';
-  $('where').textContent = w;
 }
 
 // ------------------------------------------------------------------ IR requests
@@ -395,12 +388,12 @@ canvas.addEventListener('pointerdown', e => {
     const d = Math.hypot(a[0] + dx * u - x, a[1] + dy * u - y);
     if (!best || d < best.d) best = { d, s: (cum[i - 1] + u * Math.sqrt(l2)) / routeLen };
   }
-  if (best && best.d < tol) { setWalking(false); enterRoute(best.s); return; }
+  if (best && best.d < tol) { enterRoute(best.s); return; }
   if (!inBuilding(scene, [x, y])) {
     enterFree();
     listener.x = x; listener.y = y;
     st.pos[st.venue].free = [x, y];
-    save(); updateWhere(); requestIR(); drawMap();
+    save(); requestIR(); drawMap();
   }
 });
 canvas.addEventListener('pointermove', e => {
@@ -495,7 +488,7 @@ function freeMove(dt) {
   enterFree();
   const m = Math.hypot(f, r);
   if (m > 1) { f /= m; r /= m; }
-  const sp = 1.4 * (keys.ShiftLeft || keys.ShiftRight ? 3 : 1) * Math.max(1, st.speed / 2) * dt;
+  const sp = 1.4 * (keys.ShiftLeft || keys.ShiftRight ? 3 : 1) * dt;
   const h = listener.heading;
   const dx = (Math.cos(h) * f - Math.sin(h) * r) * sp, dy = (Math.sin(h) * f + Math.cos(h) * r) * sp;
   const x = listener.x, y = listener.y;
@@ -508,22 +501,8 @@ function freeMove(dt) {
   return true;
 }
 
-// ------------------------------------------------------------------ walking along the route
-let walking = false;
-function setWalking(on) {
-  walking = on;
-  $('walkBtn').textContent = on ? '⏸ 止まる' : '🚶 道を歩く';
-}
-$('walkBtn').addEventListener('click', () => {
-  if (!walking) {
-    if (st.progress >= 0.999) enterRoute(0);
-    else if (listener.mode === 'free') enterRoute();
-  }
-  setWalking(!walking);
-  if (walking && !audio.playing) startAudio();
-});
-$('resetBtn').addEventListener('click', () => { setWalking(false); enterRoute(0); });
-$('progress').addEventListener('input', e => { setWalking(false); enterRoute(+e.target.value / 1000); });
+// ------------------------------------------------------------------ route slider
+$('progress').addEventListener('input', e => enterRoute(+e.target.value / 1000));
 
 let lastT = performance.now(), stepDist = 0, stepSide = 1, turbAcc = 0, mapAcc = 0, lvl = 0;
 function tick(t) {
@@ -533,20 +512,11 @@ function tick(t) {
     let moved = false;
     if (freeMove(dt)) moved = true;
     if (listener.mode === 'route') {
-      if (walking) {
-        const before = st.progress;
-        st.progress = Math.min(1, st.progress + dt * WALK * st.speed / routeLen);
-        stepDist += (st.progress - before) * routeLen;
-        if (st.progress >= 1) { setWalking(false); save(); }
-        placeListener(false);
-        moved = true;
-      }
       const p = routePoint(st.progress);
       const th = autoHeading(p) + listener.lookOff;
       let d = Math.atan2(Math.sin(th - listener.heading), Math.cos(th - listener.heading));
       if (Math.abs(d) > 0.002) { listener.heading += d * Math.min(1, dt * 4); }
     }
-    if (moved) updateWhere();
     // footsteps every ~0.75 m
     if (stepDist > 0.75) { stepDist = 0; playStep(); }
     requestIR();
@@ -909,6 +879,5 @@ function drawFR() {
 
 // ------------------------------------------------------------------ go
 rebuild();
-setWalking(false);
 requestAnimationFrame(tick);
 })();

@@ -18,33 +18,23 @@
   <div id="menu" class="menu" hidden>
     <label><input type="checkbox" id="optDark"> ダークモード</label>
     <label><input type="checkbox" id="optHeat"> 音圧マップ (dB(A)) を表示 (地図と地面)</label>
-    <label><input type="checkbox" id="optMini"> 右上の地図を表示</label>
     <label><input type="checkbox" id="optAmb"> 環境音 (観客・街・風・雨・波)</label>
     <label><input type="checkbox" id="optSteps"> 足音</label>
     <label class="col">距離による音量差の圧縮 <span id="compVal"></span>
       <input type="range" id="optComp" min="0" max="1" step="0.05">
       <small>0 = 物理どおり (遠くは本当に小さい) / 1 = 音量を揃える</small>
     </label>
+    <button id="resetAll">すべての設定をリセット</button>
     <a href="https://github.com/koteitan/fes-designer" target="_blank" rel="noopener">GitHub</a>
   </div>
 </header>
 
 <div id="transport">
   <button id="playBtn" class="primary">▶ 再生</button>
-  <button id="walkBtn">🚶 歩く</button>
-  <button id="resetBtn" title="スタート地点へ戻る">⏮</button>
   <label class="grow">位置
     <input type="range" id="progress" min="0" max="1000" step="1">
   </label>
-  <span id="where" class="badge">—</span>
-  <label>速さ
-    <select id="speed">
-      <option value="1">×1 (徒歩)</option>
-      <option value="3">×3</option>
-      <option value="10">×10</option>
-      <option value="30">×30</option>
-    </select>
-  </label>
+  <label><input type="checkbox" id="optMini"> 地図</label>
   <label><input type="checkbox" id="bypass"> 原音</label>
   <label>音量 <input type="range" id="volume" min="-30" max="12" step="1"></label>
 </div>
@@ -77,13 +67,13 @@
     <label>入力の音量 <span id="inGainVal"></span>
       <input type="range" id="inGain" min="-24" max="24" step="1"></label>
     <div class="meter"><div id="inMeter"></div></div>
-    <h2>聴く人 (道を自動で歩くとき)</h2>
+    <h2>聴く人 (位置スライダー・地図の道で動くとき)</h2>
     <label>頭の向き<select id="headMode">
       <option value="auto">進む方向 (着席後はステージ)</option>
       <option value="stage">いつもステージ</option>
     </select></label>
     <p class="hint">「ほかのタブの音」: ボタンを押した次の画面で音を流したいタブを選び、「タブの音声も共有」をオンにしてください。音はこのページの中だけで使い、外には送りません。元のタブの音は止まり、シミュレーションを通った音だけが聞こえます。ファイルはページにドロップしても使えます。</p>
-    <p class="hint">右上の地図: <b>S</b> と <b>席</b> はドラッグで動かせます。道をクリックするとそこから自動で歩き、道以外をクリックするとそこへ移動します。</p>
+    <p class="hint">右上の地図: <b>S</b> と <b>席</b> はドラッグで動かせます。道や道以外をクリックすると、そこへ移動します。</p>
   </section>
 
   <section id="viewWrap" class="panel">

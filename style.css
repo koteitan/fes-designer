@@ -51,7 +51,6 @@ input[type=range] { accent-color: var(--accent); }
 #transport label.grow { flex: 1; min-width: 200px; }
 #transport label.grow input { flex: 1; }
 #transport select { width: auto; }
-.badge { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 13px; min-width: 7em; text-align: center; }
 
 main {
   display: grid; grid-template-columns: 270px minmax(0, 1fr) 330px; gap: 12px; padding: 12px 16px;
@@ -78,6 +77,7 @@ main {
 #mini[hidden] { display: none; }
 #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
 #legend {
+  pointer-events: none; /* never block dragging S / 席 underneath */
   position: absolute; left: 6px; bottom: 6px; background: rgba(20,20,24,0.8); color: #ddd;
   border-radius: 6px; padding: 3px 6px; font-size: 10px;
 }
@@ -90,7 +90,7 @@ main {
 .srcRow input { flex: 1; min-width: 0; background: var(--chip); color: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
 .meter { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
 .meter div { height: 100%; width: 0; background: linear-gradient(90deg, #2f9e44, #fab005 70%, #e03131); }
-.busy { position: absolute; right: 10px; top: 10px; background: var(--chip); padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+.busy { pointer-events: none; position: absolute; right: 10px; top: 10px; background: var(--chip); padding: 2px 8px; border-radius: 6px; font-size: 12px; }
 
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 13px; }
 .kv dt { color: var(--muted); }
